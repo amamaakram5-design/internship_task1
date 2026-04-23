@@ -1,0 +1,124 @@
+import os
+import hashlib
+
+USERS_FILE = "users.txt"
+
+def hash_password(password):
+    """Password ko secure hash mein convert karta hai"""
+    return hashlib.sha256(password.encode()).hexdigest()
+
+def save_user(username, password, email):
+    hashed = hash_password(password)
+    with open(USERS_FILE, "a") as f:
+        f.write(f"{username},{hashed},{email}\n")
+
+def load_users():
+    users = {}
+    if not os.path.exists(USERS_FILE):
+        return users
+    with open(USERS_FILE, "r") as f:
+        for line in f.readlines():
+            parts = line.strip().split(",")
+            if len(parts) == 3:
+                username, hashed_pass, email = parts
+                users[username] = {"password": hashed_pass, "email": email}
+    return users
+
+def signup():
+    print("\n📝 SIGNUP")
+    print("-" * 30)
+    users = load_users()
+    
+    username = input("Enter username: ").strip()
+    
+    if username in users:
+        print("❌ Username already exists! Try a different one.\n")
+        return False
+    
+    if len(username) < 3:
+        print("❌ Username must be at least 3 characters!\n")
+        return False
+    
+    email = input("Enter email: ").strip()
+    if "@" not in email:
+        print("❌ Invalid email address!\n")
+        return False
+    
+    password = input("Enter password (min 6 chars): ").strip()
+    if len(password) < 6:
+        print("❌ Password too short! Minimum 6 characters.\n")
+        return False
+    
+    confirm = input("Confirm password: ").strip()
+    if password != confirm:
+        print("❌ Passwords do not match!\n")
+        return False
+    
+    save_user(username, password, email)
+    print(f"\n✅ Account created successfully! Welcome {username}!\n")
+    return True
+
+def login():
+    print("\n🔐 LOGIN")
+    print("-" * 30)
+    users = load_users()
+    
+    if not users:
+        print("❌ No users registered yet. Please signup first!\n")
+        return False
+    
+    username = input("Enter username: ").strip()
+    
+    if username not in users:
+        print("❌ Username not found! Please signup.\n")
+        return False
+    
+    password = input("Enter password: ").strip()
+    hashed = hash_password(password)
+    
+    if users[username]["password"] == hashed:
+        print(f"\n✅ Login Successful! Welcome back, {username}! 🎉")
+        print(f"   Your email: {users[username]['email']}\n")
+        return True
+    else:
+        print("❌ Wrong password! Try again.\n")
+        return False
+
+def view_all_users():
+    users = load_users()
+    if not users:
+        print("No users registered yet.\n")
+        return
+    print("\n👥 REGISTERED USERS:")
+    print("-" * 30)
+    for i, (username, info) in enumerate(users.items(), 1):
+        print(f"  {i}. {username} ({info['email']})")
+    print()
+
+def main():
+    print("=" * 40)
+    print("  🔐 LOGIN & SIGNUP - SoftGrowTech")
+    print("=" * 40)
+    
+    while True:
+        print("1. Signup (New Account)")
+        print("2. Login (Existing Account)")
+        print("3. View All Users")
+        print("4. Exit")
+        
+        choice = input("\nEnter choice (1-4): ").strip()
+        
+        if choice == "1":
+            signup()
+        elif choice == "2":
+            login()
+        elif choice == "3":
+            view_all_users()
+        elif choice == "4":
+            print("👋 Goodbye!")
+            break
+        else:
+            print("❌ Invalid choice!\n")
+
+if __name__ == "__main__":
+    main()
